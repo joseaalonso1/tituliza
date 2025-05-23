@@ -1,3 +1,11 @@
+import streamlit as st
+import numpy as np
+import matplotlib.pyplot as plt
+from scipy.stats import norm
+
+st.set_page_config(page_title="Simulador CRR Titulización", layout="wide")
+st.title("Simulador de Titulizaciones – CRR Art. 259")
+
 st.markdown("""
 ### ℹ️ Descripción general
 
@@ -18,16 +26,6 @@ Este simulador reproduce los cálculos de titulizaciones conforme al **Artículo
 - **LGD**: Pérdida dado el incumplimiento.
 - **p**: Parámetro de supervisión calculado con base en A, B, C, D, E según tipo de cartera.
 """)
-
-
-import streamlit as st
-import numpy as np
-import matplotlib.pyplot as plt
-from scipy.stats import norm
-
-st.set_page_config(page_title="Simulador CRR Titulización", layout="wide")
-st.title("Simulador de Titulizaciones – CRR Art. 259")
-
 # -------------------
 # Funciones generales
 # -------------------
