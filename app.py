@@ -1,22 +1,24 @@
-# Streamlit App para Simulador de Titulizaciones (CRR Art. 259)
-# ---------------------------------------------------------------
-# Este simulador reproduce los cálculos de titulizaciones conforme al Artículo 259 del CRR (Capital Requirements Regulation).
-# Cada sección representa una herramienta específica de cálculo o visualización:
-#
-# SECCIÓN 1: Visualiza gráficamente dónde se ubica el K_IRB respecto a los puntos de Attachment (A) y Detachment (D).
-# SECCIÓN 2: Calcula K_SSA usando la Supervisory Formula Approach (KSSFA) para distintas madureces y clasificaciones del portafolio.
-# SECCIÓN 3: Calculadora sencilla para obtener K_IRB a partir del total de RWA y EAD de la cartera subyacente.
-# SECCIÓN 4: Calculadora final de Risk Weights y RWA aplicables según el tramo identificado (tramos 1, 2, 3).
-#
-# GLOSARIO DE VARIABLES:
-# - A: Punto de attachment (comienzo del tramo de pérdida).
-# - D: Punto de detachment (final del tramo de pérdida).
-# - K_IRB: Carga de capital de la cartera subyacente (Expected + Unexpected Losses).
-# - K_SSA: Capital requerido según Supervisory Formula Approach.
-# - RWA: Risk Weighted Assets (activo ponderado por riesgo).
-# - N: Número efectivo de exposiciones.
-# - LGD: Pérdida dado el incumplimiento (loss given default).
-# - p: Parámetro de supervisión calculado con base en A, B, C, D, E según tipo de cartera.
+st.markdown("""
+### ℹ️ Descripción general
+
+Este simulador reproduce los cálculos de titulizaciones conforme al **Artículo 259 del CRR (Capital Requirements Regulation)**. Cada sección representa una herramienta específica de cálculo o visualización:
+
+**SECCIÓN 1**: Visualiza gráficamente dónde se ubica el K_IRB respecto a los puntos de Attachment (A) y Detachment (D).  
+**SECCIÓN 2**: Calcula K_SSA usando la Supervisory Formula Approach (KSSFA) para distintas madureces y clasificaciones del portafolio.  
+**SECCIÓN 3**: Calculadora sencilla para obtener K_IRB a partir del total de RWA y EAD de la cartera subyacente.  
+**SECCIÓN 4**: Calculadora final de Risk Weights y RWA aplicables según el tramo identificado (tramos 1, 2, 3).
+
+**📘 Glosario de Variables:**
+- **A**: Punto de attachment (comienzo del tramo de pérdida).
+- **D**: Punto de detachment (final del tramo de pérdida).
+- **K_IRB**: Carga de capital de la cartera subyacente (Expected + Unexpected Losses).
+- **K_SSA**: Capital requerido según Supervisory Formula Approach.
+- **RWA**: Activo ponderado por riesgo.
+- **N**: Número efectivo de exposiciones.
+- **LGD**: Pérdida dado el incumplimiento.
+- **p**: Parámetro de supervisión calculado con base en A, B, C, D, E según tipo de cartera.
+""")
+
 
 import streamlit as st
 import numpy as np
