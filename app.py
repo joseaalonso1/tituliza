@@ -1,19 +1,19 @@
 # Streamlit App para Simulador de Titulizaciones (CRR Art. 259)
 # ---------------------------------------------------------------
-# Cuatro secciones separadas:
-# 1. Visualización de puntos A-D
-# 2. K_SSA vs K_IRB
-# 3. Cálculo de K_IRB
-# 4. Cálculo de RWA (tipos 1-2-3)
+# Basado íntegramente en el desarrollo realizado en simulador_titu.ipynb
+# Se mantienen: inputs, lógica de cálculo, y estructura por bloques.
 
 import streamlit as st
 import numpy as np
 import matplotlib.pyplot as plt
+from scipy.stats import norm
 
 st.set_page_config(page_title="Simulador CRR Titulización", layout="centered")
 st.title("Simulador de Titulizaciones – CRR Art. 259")
 
-# --- Funciones auxiliares ---
+# -------------------
+# Funciones base del modelo
+# -------------------
 def calcular_kirb(rwa, ead):
     return (rwa / ead) * 0.08 if ead > 0 else 0
 
@@ -40,55 +40,60 @@ def calcular_rw(K, KSSA, A, D):
         rw = 12.5 * KSSA * (D - K) / (D - A) + 12.5 * (K - A) / (D - A)
     return tipo, max(rw, 15.0)
 
-# --- Secciones de la app ---
-tabs = st.tabs(["Puntos A-D", "K_SSA vs K_IRB", "K_IRB", "RWAs"])
+# -------------------
+# Entradas base
+# -------------------
+st.sidebar.header("Inputs generales")
+rwa_pool = st.sidebar.number_input("RWA total", value=100.0)
+ead_pool = st.sidebar.number_input("EAD total", value=100.0)
+K_irb_manual = st.sidebar.number_input("K_IRB (manual)", min_value=0.01, max_value=1.0, value=0.10)
+A_global = st.sidebar.slider("Punto A", 0.0, 0.9, 0.2, step=0.01)
+D_global = st.sidebar.slider("Punto D", A_global + 0.01, 1.0, 0.8, step=0.01)
+p_valor = st.sidebar.slider("Parámetro p", 0.1, 1.0, 0.5, step=0.01)
 
-# 1. Puntos A-D
+# -------------------
+# Tabs seccionadas (estructura original)
+# -------------------
+tabs = st.tabs(["Puntos A-D", "K_SSA vs K_IRB", "K_IRB calculado", "RW y RWA"])
+
+# Puntos A-D
 with tabs[0]:
-    st.subheader("Visualización de puntos A-D")
-    A = st.slider("Punto A", 0.0, 0.9, 0.2)
-    D = st.slider("Punto D", A+0.01, 1.0, 0.8)
+    st.subheader("Visualización del tramo [A-D] sobre el eje")
     fig, ax = plt.subplots()
-    ax.hlines(1, 0, 1, color='gray', linestyle='--')
-    ax.vlines([A, D], 0, 1, color='red', linestyle='-', label='Puntos A y D')
+    ax.hlines(1, 0, 1, colors='gray', linestyles='--')
+    ax.vlines([A_global, D_global], 0, 1, colors='red', linestyles='-', label='A, D')
     ax.set_xlim(0, 1)
     ax.set_ylim(0, 1.1)
-    ax.set_title("Ubicación de puntos A-D sobre tramo")
+    ax.set_title("Representación visual de A-D")
     st.pyplot(fig)
 
-# 2. K_SSA vs K_IRB
+# K_SSA vs K_IRB
 with tabs[1]:
-    st.subheader("Gráfico K_SSA vs K_IRB")
-    A = st.number_input("A", 0.0, 1.0, 0.05)
-    D = st.number_input("D", A+0.01, 1.0, 0.30)
-    p = st.number_input("Parámetro p", 0.01, 1.0, 0.5)
-    kirb_range = np.linspace(0.01, 0.30, 100)
+    st.subheader("Cálculo de K_SSA vs K_IRB (5 madureces)")
+    kirb_range = np.linspace(0.01, 0.30, 200)
     fig, ax = plt.subplots()
     for M in range(1, 6):
-        kssa_vals = [calcular_kssa(K, A, D, p + 0.05 * M) for K in kirb_range]
-        ax.plot(kirb_range, kssa_vals, label=f"M_T = {M}")
+        kssa_values = [calcular_kssa(K, A_global, D_global, p_valor + 0.05 * M) for K in kirb_range]
+        ax.plot(kirb_range, kssa_values, label=f"M_T = {M}")
     ax.set_xlabel("K_IRB")
     ax.set_ylabel("K_SSA")
-    ax.set_title("K_SSA vs K_IRB por madurez")
+    ax.set_title("K_SSA vs K_IRB para diferentes M_T")
     ax.legend()
     st.pyplot(fig)
 
-# 3. K_IRB
+# K_IRB calculado
 with tabs[2]:
-    st.subheader("Cálculo de K_IRB")
-    rwa = st.number_input("RWA del pool", 0.0, 10000.0, 100.0)
-    ead = st.number_input("EAD del pool", 0.01, 10000.0, 100.0)
-    kirb = calcular_kirb(rwa, ead)
-    st.markdown(f"**K_IRB =** {kirb:.4f}")
+    st.subheader("Cálculo automático de K_IRB")
+    kirb_calculado = calcular_kirb(rwa_pool, ead_pool)
+    st.metric(label="K_IRB calculado (RWA / EAD × 0.08)", value=f"{kirb_calculado:.4f}")
 
-# 4. RWA por tipo (CRR Art. 259)
+# RW y RWA
 with tabs[3]:
-    st.subheader("Evaluación del RW y RWA")
-    K = st.number_input("K_IRB (manual)", 0.0, 1.0, 0.10)
-    KSSA = st.number_input("K_SSA", 0.0, 1.0, 0.25)
-    A = st.number_input("A", 0.0, 1.0, 0.05)
-    D = st.number_input("D", A+0.01, 1.0, 0.30)
-    tipo, rw = calcular_rw(K, KSSA, A, D)
-    st.markdown(f"**Tipo de tramo:** {tipo}")
-    st.markdown(f"**RW aplicado:** {rw:.2f}%")
-    st.markdown(f"**RWA por cada 100 de exposición:** {rw:.2f}")
+    st.subheader("Evaluación de RWA y tipo de tramo")
+    kssa_calculado = calcular_kssa(K_irb_manual, A_global, D_global, p_valor)
+    tipo_tramo, rw_aplicado = calcular_rw(K_irb_manual, kssa_calculado, A_global, D_global)
+    st.markdown(f"**K_SSA resultante:** {kssa_calculado:.4f}")
+    st.markdown(f"**Tipo de tramo:** {tipo_tramo}")
+    st.markdown(f"**RW aplicado (mínimo 15%):** {rw_aplicado:.2f}%")
+    st.markdown(f"**RWA para exposición de 100:** {rw_aplicado:.2f}")
+    st.info("Este análisis aplica el Artículo 259 del CRR para titulizaciones bajo SEC-IRBA")
